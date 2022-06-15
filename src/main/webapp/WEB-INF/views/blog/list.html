@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8"/>
+    <title>Title Blogs</title>
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+    <script type="text/javascript">
+
+        function addNewBlog() {
+                //lay du lieu
+                let name = $('#name').val();
+                let email = $('#email').val();
+                let categoryId = $("#category").find(":selected").val();
+                // $("#thanh_pho").find(":selected").val()
+                // $('#category option:selected').attr('id')
+                let newBlog = {
+                    name: name,
+                    email: email,
+                    category: {
+                        id: categoryId
+                    }
+                };
+
+                // goi ajax
+                $.ajax({
+                    // kieu du lieu day len tu client
+                    headers: {
+                        'Accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    //method
+                    type: "POST",
+                    // du lieu gui len
+                    data: JSON.stringify(newBlog),
+                    //tên API
+                    url: "/blogs",
+                    //xử lý khi thành công
+                    success: function () {
+                        showListBlog();
+                        alert("Tao moi thanh cong");
+                        $('#name').val = "";
+                        $('#email').val = "";
+                    }
+                });
+                //chặn sự kiện mặc định của thẻ
+                event.preventDefault();
+        }
+
+        function showListBlog() {
+            $.ajax({
+                type: "GET",
+                //tên API
+                url: "/blogs",
+                //xử lý khi thành công
+                // kết quả của lời gọi API sẽ về biến trong ngoặc data
+                success: function (blog) {
+                    // hien thi danh sach o day
+                    let content = '    <tr>\n' +
+                        '        <td>Name</td>\n' +
+                        '        <td>Email</td>\n' +
+                        '        <td>Date</td>\n' +
+                        '        <td>Category</td>\n' +
+                        '        <td>Delete</td>\n' +
+                        '    </tr>';
+                    for (let i = 0; i < blog.length; i++) {
+                        // content += getSmartphone(data[i]);
+                        content += `<tr>
+                                    <td>${blog[i].name}</td>
+                                    <td>${blog[i].email}</td>
+                                    <td>${blog[i].date}</td>
+                                    <td>${blog[i].category.name}</td>
+                                    <td> <a href="${blog[i].id}" class="deleteBlog" onclick="deleteBlog(this)">Delete</a></td>
+                                    </tr>`;
+                    }
+                    document.getElementById('blogList').innerHTML = content;
+                }
+            });
+            //chặn sự kiện mặc định của thẻ
+            event.preventDefault();
+        }
+
+        // function getBlog(blog) {
+        //     return `<tr><td >${blog.name}</td><td >${blog.email}</td><td >${blog.date}</td><td >${blog.category.name}</td>` +
+        //         `<td><a class="deleteBlog" href="${blog.id}">Delete</a></td></tr>`;
+        // }
+        function deleteBlog(element) {
+            let blogId = element.attr("href");
+            // goi ajax
+            $.ajax({
+                type: "DELETE",
+                //tên API
+                url: `/blogs/${blogId}`,
+                //xử lý khi thành công
+                success: function () {
+                    showListBlog();
+                }
+            });
+            //chặn sự kiện mặc định của thẻ
+            event.preventDefault();
+        }
+
+        showListBlog();
+
+
+    </script>
+</head>
+<body>
+<form id="add-blog">
+    <table>
+        <tr>
+            <td>Name:</td>
+            <td><input type="text" id="name" placeholder="name"/></td>
+        </tr>
+        <tr>
+            <td>Email:</td>
+            <td><input type="text" id="email" placeholder="email"/></td>
+        </tr>
+        <tr>
+            <td>Category:</td>
+            <td>
+                <select th:field="*{category}" id="category">
+                    <option th:each="category : ${category}" th:value="${category.id}"
+                            th:text="${category.name}"></option>
+                </select>
+            </td>
+        </tr>
+        <tr>
+            <td></td>
+            <td><input type="submit" value="Create Blog" onclick="addNewBlog()"></td>
+        </tr>
+    </table>
+</form>
+<!--<a href="/blogs/create">Create New Blog</a>-->
+
+<!--<form>-->
+<!--    Search by name:-->
+<!--    <input name="search" type="text"/>-->
+<!--    <input type="submit" value="Search"/>-->
+<!--</form>-->
+
+<!--<form>-->
+<!--    Sort by-->
+<!--    <select name="sort">-->
+<!--        <option value="id">Sort by Id</option>-->
+<!--        <option value="name">Sort by Name</option>-->
+<!--        <option value="new">Newest Blogs</option>-->
+<!--        <option value="old">Oldest Blogs</option>-->
+<!--        <input type="submit" value="Search"/>-->
+<!--    </select>-->
+<!--</form>-->
+
+<!--<form>-->
+<!--    Sort by Category-->
+<!--    <select name="id">-->
+<!--        <option th:each="category : ${category}" th:value="${category.id}" th:text="${category.name}"></option>-->
+<!--        <input type="submit" value="Search"/>-->
+<!--    </select>-->
+<!--</form>-->
+
+<h1>Blog List</h1>
+<table border="1" id="blogList">
+        <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Delete</th>
+        </tr>
+        <th:block th:each="blog : ${blogs}">
+            <tr>
+                <td><a th:text="${blog.name}" th:href="@{/blogs/detail/__${blog.id}__}"></a></td>
+                <td th:text="${blog.email}"></td>
+                <td th:text="${blog.date}"></td>
+                <td th:if="${blog.category}" th:text="${blog.category.name}"></td>
+                <td th:unless="${blog.category}"></td>
+                <!--            <td><a th:href="@{/blogs/edit/__${blog.id}__ }">Edit</a></td>-->
+                <td><a class="deleteBlog" th:href="${blog.id}">Delete</a></td>
+            </tr>
+        </th:block>
+<!--        <div>-->
+<!--            <a th:href="@{'/blogs'(page=${blogs.number - 1})}" th:if="${blogs.hasPrevious()}">Previous</a>-->
+<!--            <span th:text="${blogs.number + 1}"></span>/<span th:text="${blogs.totalPages}"></span>-->
+<!--            <a th:href="@{'/blogs'(page=${blogs.number + 1})}" th:if="${blogs.hasNext()}">Next</a>-->
+<!--        </div>-->
+</table>
+</body>
+</html>
